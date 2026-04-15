@@ -1,0 +1,12 @@
+# ide
+.idea/
+
+# binaries
+order-service/order-service
+payment-service/payment-service
+
+# env files
+.env
+
+# mac
+.DS_Store
