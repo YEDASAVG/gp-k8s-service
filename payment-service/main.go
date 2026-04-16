@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -46,6 +47,13 @@ func (s *Store) Get(id string) (Payment, bool) {
 	defer s.mu.RUnlock()
 	payment, ok := s.payments[id]
 	return payment, ok
+}
+
+func getEnv(key, fallback string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return fallback
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -94,6 +102,7 @@ func getPaymentHandler(store *Store) http.HandlerFunc {
 
 func main() {
 	store := NewStore()
+	port := getEnv("PORT", "8081")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
@@ -107,8 +116,8 @@ func main() {
 	})
 	mux.HandleFunc("/payments/", getPaymentHandler(store))
 
-	log.Println("payment-service starting on :8081")
-	if err := http.ListenAndServe(":8081", mux); err != nil {
+	log.Printf("payment-service starting on :%s", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
 	}
 }

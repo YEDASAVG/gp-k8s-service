@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 )
@@ -56,6 +57,13 @@ func (s *Store) List() []Order {
 		list = append(list, o)
 	}
 	return list
+}
+
+func getEnv(key, fallback string) string {
+	if val := os.Getenv(key); val != "" {
+		return val
+	}
+	return fallback
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -111,6 +119,7 @@ func getOrderHandler(store *Store) http.HandlerFunc {
 
 func main() {
 	store := NewStore()
+	port := getEnv("PORT", "8080")
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
@@ -126,8 +135,8 @@ func main() {
 	})
 	mux.HandleFunc("/orders/", getOrderHandler(store))
 
-	log.Println("order-service starting on :8080")
-	if err := http.ListenAndServe(":8080", mux); err != nil {
+	log.Printf("order-service starting on :%s", port)
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
 		log.Fatal(err)
 	}
 }
