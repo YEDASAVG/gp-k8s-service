@@ -112,15 +112,39 @@ func getPaymentHandler(store *Store) http.HandlerFunc {
 	}
 }
 
+func configHandler(cfg map[string]string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, cfg)
+	}
+}
+
 func main() {
 	store := NewStore()
 	port := getEnv("PORT", "8081")
+	logLevel := getEnv("LOG_LEVEL", "info")
+	dbURL := getEnv("DATABASE_URL", "")
+	apiKey := getEnv("API_KEY", "")
+
+	log.Printf("config: LOG_LEVEL=%s DATABASE_URL_SET=%v API_KEY_SET=%v",
+		logLevel,
+		dbURL != "",
+		apiKey != "",
+	)
 
 	var ready atomic.Bool
+
+	cfg := map[string]string{
+		"service":     "payment-service",
+		"port":        port,
+		"log_level":   logLevel,
+		"has_db_url":  fmt.Sprintf("%t", dbURL != ""),
+		"has_api_key": fmt.Sprintf("%t", apiKey != ""),
+	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/ready", readyHandler(&ready))
+	mux.HandleFunc("/config", configHandler(cfg))
 	mux.HandleFunc("/payments", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
