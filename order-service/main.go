@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type Order struct {
@@ -76,6 +78,16 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+func readyHandler(ready *atomic.Bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !ready.Load() {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not ready"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
+	}
+}
+
 func listOrdersHandler(store *Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, store.List())
@@ -121,8 +133,11 @@ func main() {
 	store := NewStore()
 	port := getEnv("PORT", "8080")
 
+	var ready atomic.Bool
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/ready", readyHandler(&ready))
 	mux.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -134,6 +149,12 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/orders/", getOrderHandler(store))
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		ready.Store(true)
+		log.Printf("order-service ready")
+	}()
 
 	log.Printf("order-service starting on :%s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {

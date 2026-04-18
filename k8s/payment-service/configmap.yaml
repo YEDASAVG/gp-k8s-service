@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: payment-service-config
-  namespace: dev
-data:
-  PORT: "8081"

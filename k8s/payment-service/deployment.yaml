@@ -2,8 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
-  namespace: dev
 spec:
+  replicas: 3
   selector:
     matchLabels:
       app: payment-service
@@ -14,12 +14,19 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: shrenikmehar/payment-service:latest
+          image: abhiraj777/payment-service:v2
           ports:
             - containerPort: 8081
-          envFrom:
-            - configMapRef:
-                name: payment-service-config
+          env:
+            - name: PORT
+              value: "8081"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "128Mi"
           livenessProbe:
             httpGet:
               path: /health
@@ -28,14 +35,7 @@ spec:
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /health
+              path: /ready
               port: 8081
-            initialDelaySeconds: 5
-            periodSeconds: 10
-      resources:
-        requests:
-          cpu: 100m
-          memory: 64Mi
-        limits:
-          cpu: 200m
-          memory: 128Mi
+            initialDelaySeconds: 1
+            periodSeconds: 2

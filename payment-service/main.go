@@ -8,6 +8,8 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 type Payment struct {
@@ -66,6 +68,16 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
+func readyHandler(ready *atomic.Bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !ready.Load() {
+			writeJSON(w, http.StatusServiceUnavailable, map[string]string{"status": "not ready"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ready"})
+	}
+}
+
 func createPaymentHandler(store *Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
@@ -104,8 +116,11 @@ func main() {
 	store := NewStore()
 	port := getEnv("PORT", "8081")
 
+	var ready atomic.Bool
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/ready", readyHandler(&ready))
 	mux.HandleFunc("/payments", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
@@ -115,6 +130,12 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/payments/", getPaymentHandler(store))
+
+	go func() {
+		time.Sleep(2 * time.Second)
+		ready.Store(true)
+		log.Printf("payment-service ready")
+	}()
 
 	log.Printf("payment-service starting on :%s", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
