@@ -14,12 +14,14 @@ spec:
     spec:
       containers:
         - name: order-service
-          image: abhiraj777/order-service:v2
+          image: abhiraj777/order-service:v3
           ports:
             - containerPort: 8080
-          env:
-            - name: PORT
-              value: "8080"
+          envFrom:
+            - configMapRef:
+                name: order-service-config
+            - secretRef:
+                name: order-service-secret
           resources:
             requests:
               cpu: "100m"

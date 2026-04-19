@@ -14,12 +14,14 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: abhiraj777/payment-service:v2
+          image: abhiraj777/payment-service:v3
           ports:
             - containerPort: 8081
-          env:
-            - name: PORT
-              value: "8081"
+          envFrom:
+            - configMapRef:
+                name: payment-service-config
+            - secretRef:
+                name: payment-service-secret
           resources:
             requests:
               cpu: "100m"
