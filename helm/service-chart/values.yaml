@@ -1,0 +1,14 @@
+name: my-service
+
+image: nginx:latest
+port: 8080
+replicas: 3
+
+awsSecretPath: prod/my-service
+refreshInterval: 1h
+secretKeys:
+  - DATABASE_URL
+  - API_KEY
+
+config:
+  LOG_LEVEL: "info"

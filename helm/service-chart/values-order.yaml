@@ -1,0 +1,8 @@
+name: order-service
+image: abhiraj777/order-service:v3
+port: 8080
+awsSecretPath: prod/order-service
+refreshInterval: 1h
+secretKeys:
+  - DATABASE_URL
+  - API_KEY

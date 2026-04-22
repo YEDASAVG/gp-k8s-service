@@ -1,0 +1,9 @@
+name: payment-service
+image: abhiraj777/payment-service:v3
+port: 8081
+awsSecretPath: prod/payment-service
+refreshInterval: 5m
+secretKeys:
+  - DATABASE_URL
+  - API_KEY
+  - DB_TEST

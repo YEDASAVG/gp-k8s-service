@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: order-service
+  name: {{ .Values.name }}
 spec:
-  replicas: 3
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      app: order-service
+      app: {{ .Values.name }}
   template:
     metadata:
       labels:
-        app: order-service
+        app: {{ .Values.name }}
     spec:
       containers:
-        - name: order-service
-          image: abhiraj777/order-service:v3
+        - name: {{ .Values.name }}
+          image: {{ .Values.image }}
           ports:
-            - containerPort: 8080
+            - containerPort: {{ .Values.port }}
           envFrom:
             - configMapRef:
-                name: order-service-config
+                name: {{ .Values.name }}-config
             - secretRef:
-                name: order-service-secret
+                name: {{ .Values.name }}-secret
           resources:
             requests:
               cpu: "100m"
@@ -32,12 +32,12 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: {{ .Values.port }}
             initialDelaySeconds: 5
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8080
+              port: {{ .Values.port }}
             initialDelaySeconds: 1
             periodSeconds: 2
